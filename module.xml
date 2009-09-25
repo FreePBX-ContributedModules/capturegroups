@@ -1,0 +1,19 @@
+<module>
+	<rawname>capturegroups</rawname>
+	<name>Capture Groups</name>
+	<version>0.2</version>
+	<changelog>
+		*0.1* Test New Module
+		*0.2* Se sale del grupo de captura apropiadamente, antes no se desuscribia. Busqueda de extensiones. Grupos y extensiones virtuales son ahora automaticos
+	</changelog>
+	<type>setup</type>
+	<category>Inbound Call Control</category>
+	<description>
+		This module allow the administrator to quickly create and administrate
+capture groups. It will configure every extension's capturegroup and
+pickupgroup automatically.
+	</description>
+	<menuitems>
+		<capturegroups>Capture Groups</capturegroups>
+	</menuitems>
+</module>
