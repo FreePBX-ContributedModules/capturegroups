@@ -1,0 +1,101 @@
+--- channels/chan_sip.c	2008-09-08 16:40:10.000000000 -0430
++++ /home/loris/chan_sip.c-good-findchannelbyname	2009-02-15 09:12:17.000000000 -0430
+@@ -508,6 +508,7 @@
+ #define DEFAULT_ALLOW_EXT_DOM	TRUE
+ #define DEFAULT_REALM		"asterisk"
+ #define DEFAULT_NOTIFYRINGING	TRUE
++#define DEFAULT_SENDCALLINFO	TRUE
+ #define DEFAULT_PEDANTIC	FALSE
+ #define DEFAULT_AUTOCREATEPEER	FALSE
+ #define DEFAULT_QUALIFY		FALSE
+@@ -539,6 +540,7 @@
+ static int global_limitonpeers;		/*!< Match call limit on peers only */
+ static int global_rtautoclear;
+ static int global_notifyringing;	/*!< Send notifications on ringing */
++static int global_sendcallinfo;		/*!< Send info about called and calling party */
+ static int global_notifyhold;		/*!< Send notifications on hold */
+ static int global_alwaysauthreject;	/*!< Send 401 Unauthorized for all failing requests */
+ static int srvlookup;			/*!< SRV Lookup on or off. Default is on */
+@@ -7225,6 +7227,7 @@
+ 	size_t maxbytes = sizeof(tmp);
+ 	struct sip_request req;
+ 	char hint[AST_MAX_EXTENSION];
++	char hint3[AST_MAX_EXTENSION] ;
+ 	char *statestring = "terminated";
+ 	const struct cfsubscription_types *subscriptiontype;
+ 	enum state { NOTIFY_OPEN, NOTIFY_INUSE, NOTIFY_CLOSED } local_state = NOTIFY_OPEN;
+@@ -7284,6 +7287,8 @@
+ 	if (ast_get_hint(hint, sizeof(hint), NULL, 0, NULL, p->context, p->exten)) {
+ 		char *hint2 = hint, *individual_hint = NULL;
+ 		int hint_count = 0, unavailable_count = 0;
++		
++		ast_get_hint(hint3, sizeof(hint3), NULL, 0, NULL, p->context, p->exten);
+ 
+ 		while ((individual_hint = strsep(&hint2, "&"))) {
+ 			hint_count++;
+@@ -7373,8 +7378,46 @@
+ 	case DIALOG_INFO_XML: /* SNOM subscribes in this format */
+ 		ast_build_string(&t, &maxbytes, "<?xml version=\"1.0\"?>\n");
+ 		ast_build_string(&t, &maxbytes, "<dialog-info xmlns=\"urn:ietf:params:xml:ns:dialog-info\" version=\"%d\" state=\"%s\" entity=\"%s\">\n", p->dialogver++, full ? "full":"partial", mto);
+-		if ((state & AST_EXTENSION_RINGING) && global_notifyringing)
+-			ast_build_string(&t, &maxbytes, "<dialog id=\"%s\" direction=\"recipient\">\n", p->exten);
++		if ((state & AST_EXTENSION_RINGING) && global_notifyringing) {
++			if (global_sendcallinfo && !ast_strlen_zero(hint)) {
++				struct ast_channel *chan = NULL;
++				struct sip_pvt *np = NULL;	
++				struct sip_user *local_user = NULL;
++				
++ 				while ((chan = ast_channel_walk_locked(chan)) != NULL) {
++					if((chan->_state == AST_STATE_RINGING || chan->_state ==  AST_STATE_DOWN) && chan->tech_pvt) { 
++						char *hint2 = hint3, *individual_hint = NULL;
++
++						while ((individual_hint = strsep(&hint2, "&"))) {
++							if (!strncasecmp(chan->name, individual_hint, strlen(individual_hint))) {
++								np = chan->tech_pvt;
++   				                     		local_user = find_user(np->peername, 1);
++								ast_build_string(&t, &maxbytes, "<dialog id=\"%s\" direction=\"recipient\" call-id=\"%s\" local-tag=\"%s\" remote-tag=\"%s\">\n", p->exten, np->callid, np->tag, np->theirtag);
++								ast_build_string(&t, &maxbytes, "<state>%s</state>\n", statestring);
++								ast_build_string(&t, &maxbytes, "<local>\n");
++								ast_build_string(&t, &maxbytes, "<identity display=\"%s\">%s</identity>\n", local_user->cid_name, np->uri);
++								ast_build_string(&t, &maxbytes, "<target uri=\"%s\"/>\n", np->uri);
++								ast_build_string(&t, &maxbytes, "</local>\n");
++								ast_build_string(&t, &maxbytes, "<remote>\n");
++								ast_build_string(&t, &maxbytes, "<identity display=\"%s\">sip:%s@%s</identity>\n", np->fromname, np->fromuser, p->fromdomain);
++								ast_build_string(&t, &maxbytes, "<target uri=\"sip:%s@%s\"/>\n",  p->exten, p->fromdomain);
++								ast_build_string(&t, &maxbytes, "</remote>\n");
++                        					ast_log(LOG_DEBUG, "Sent call-pickup info to peer %s\n", p->peername);
++								ast_mutex_unlock(&chan->lock);
++								break; /* everything done, jump out of channel walk */
++                    					}
++						}
++					} 
++					ast_mutex_unlock(&chan->lock);
++				}
++				if (!np) {
++					ast_build_string(&t, &maxbytes, "<dialog id=\"%s\" direction=\"recipient\">\n", p->exten);
++				}
++			} else {
++				ast_build_string(&t, &maxbytes, "<dialog id=\"%s\" direction=\"recipient\">\n", p->exten);
++			}
++
++		}
+ 		else
+ 			ast_build_string(&t, &maxbytes, "<dialog id=\"%s\">\n", p->exten);
+ 		ast_build_string(&t, &maxbytes, "<state>%s</state>\n", statestring);
+@@ -17385,6 +17431,7 @@
+ 	global_regcontext[0] = '\0';
+ 	expiry = DEFAULT_EXPIRY;
+ 	global_notifyringing = DEFAULT_NOTIFYRINGING;
++	global_sendcallinfo = DEFAULT_SENDCALLINFO;
+ 	global_limitonpeers = FALSE;
+ 	global_directrtpsetup = FALSE;		/* Experimental feature, disabled by default */
+ 	global_notifyhold = FALSE;
+@@ -17521,6 +17568,8 @@
+ 			global_directrtpsetup = ast_true(v->value);
+ 		} else if (!strcasecmp(v->name, "notifyringing")) {
+ 			global_notifyringing = ast_true(v->value);
++		} else if (!strcasecmp(v->name, "sendcallinfo")) {
++			global_sendcallinfo = ast_true(v->value);
+ 		} else if (!strcasecmp(v->name, "notifyhold")) {
+ 			global_notifyhold = ast_true(v->value);
+ 		} else if (!strcasecmp(v->name, "alwaysauthreject")) {
