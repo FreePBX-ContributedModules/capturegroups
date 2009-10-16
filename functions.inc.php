@@ -57,6 +57,9 @@ function capturegroups_get_config($engine)
 					sql($sql);
 					$sql = "REPLACE INTO sip VALUES ($extension, 'pickupgroup', '$virtual_extension', 0)";
 					sql($sql);
+					$sql = "UPDATE sip set data=(SELECT name FROM users WHERE extension=$extension LIMIT 1) WHERE keyword='callerid' AND id='$extension' LIMIT 1";
+					sql($sql);
+
 					// creamos el hint para la extension, asi la podemos monitorear
 					$hint = "SIP/". $extension . "&Custom:DND". $extension;
 					$ext->add($ctx_custom_group, $extension, "", new ext_noop("$extension Hint"));

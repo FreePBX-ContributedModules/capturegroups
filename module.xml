@@ -1,17 +1,16 @@
 <module>
 	<rawname>capturegroups</rawname>
 	<name>Capture Groups</name>
-	<version>0.2</version>
+	<version>0.3</version>
 	<changelog>
 		*0.1* Test New Module
 		*0.2* Se sale del grupo de captura apropiadamente, antes no se desuscribia. Busqueda de extensiones. Grupos y extensiones virtuales son ahora automaticos
+		*0.3* Modifica el callerid para sip de los usuarios suscritos a un grupo de captura con el nombre del usuario (tal como se encuentra en la tabla users)
 	</changelog>
 	<type>setup</type>
 	<category>Inbound Call Control</category>
 	<description>
-		This module allow the administrator to quickly create and administrate
-capture groups. It will configure every extension's capturegroup and
-pickupgroup automatically.
+		Capture Groups Module - Allows for extensions to subscribe to a context that will let them know when other phones in that context are ringing and makes it possible to capture the calls
 	</description>
 	<menuitems>
 		<capturegroups>Capture Groups</capturegroups>
