@@ -10,7 +10,7 @@
 	<type>setup</type>
 	<category>Inbound Call Control</category>
 	<description>
-		Capture Groups Module - Allows for extensions to subscribe to a context that will let them know when other phones in that context are ringing and makes it possible to capture the calls
+		Capture Groups Module - Allows for extensions to subscribe to a context that will let them know when other phones in that context are ringing and makes it possible to capture the calls. Developed by Maikel Salazar. Sponsored by TI Soluciones http://www.solucionesit.com.ve
 	</description>
 	<menuitems>
 		<capturegroups>Capture Groups</capturegroups>

@@ -1,5 +1,6 @@
 <?php /* $Id: page.capturegroups.php   $ */
-//Copyright (C) 2008 TI Soluciones (msalazar at solucionesit dot com dot ve)
+// Developed by Maikel Salazar (maikelsalazar at gmail dot com)
+// Sponsored by TI Soluciones, http://www.solucionesit.com.ve
 //
 //This program is free software; you can redistribute it and/or
 //modify it under the terms of the GNU General Public License
@@ -10,19 +11,6 @@
 //but WITHOUT ANY WARRANTY; without even the implied warranty of
 //MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //GNU General Public License for more details.
-
-/*include_once ( dirname(__FILE__) . "/../../extensions.class.php");
-$ext = new extensions();
-
-
-capturegroups_get_config("asterisk");
-
-echo "<pre>";
-print_r($ext->generateConf());
-echo "</pre>";
-
-exit;*/
-
 
 if (isset($_GET["extensions"], $_GET["ajax"]))
 {
